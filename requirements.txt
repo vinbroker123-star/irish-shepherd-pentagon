@@ -1,5 +1,4 @@
-
 streamlit
 openai
 pymupdf
-fpdf
+reportlab
