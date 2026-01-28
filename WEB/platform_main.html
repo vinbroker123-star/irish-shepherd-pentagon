@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>IRISH SHEPHERD | Full Emerald Fleet</title>
+    <style>
+        :root { --emerald: #004d00; --gold: #D4AF37; --bg: #050505; --card: rgba(0, 30, 0, 0.85); --text: #f0f0f0; }
+        body { background: radial-gradient(circle, #003300 0%, #000 100%); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; min-height: 100vh; }
+        #landing-page { padding: 40px; text-align: center; }
+        .hero h1 { color: var(--gold); letter-spacing: 4px; text-transform: uppercase; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; max-width: 1400px; margin: 0 auto; }
+        .card { background: var(--card); border: 1px solid var(--gold); border-radius: 12px; padding: 25px; display: flex; flex-direction: column; justify-content: space-between; min-height: 280px; }
+        button { width: 100%; padding: 12px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .btn-reg { background: var(--gold); color: #000; margin-bottom: 10px; }
+        .btn-login { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,10,0,0.98); z-index: 1000; justify-content: center; align-items: center; }
+        .modal { background: #111; border: 2px solid var(--gold); padding: 30px; border-radius: 15px; width: 450px; text-align: center; }
+        .modal input { width: 90%; padding: 12px; margin-bottom: 12px; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px; text-align: center; }
+        #money-flow { display: none; background: #000; color: #0f0; padding: 15px; border: 1px solid var(--gold); margin-top: 20px; font-family: monospace; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div id="landing-page">
+        <div class="hero">
+            <h1>ИРЛАНДСКИЙ ПАСТУХ</h1>
+            <p style="color:var(--gold);">ВЕРИФИКАЦИЯ ЮРИДИЧЕСКИХ ДОКУМЕНТОВ ЦИФРОВЫМИ ДВОЙНИКАМИ</p>
+        </div>
+        <div class="grid" id="landing-grid"></div>
+    </div>
+
+    <div id="reg-overlay" class="overlay">
+        <div class="modal">
+            <h3>АНКЕТА ЮРИДИЧЕСКОЙ ФИРМЫ</h3>
+            <p style="font-size:0.7rem; color:red; margin-bottom:10px;">ЗАПОЛНИТЕ ВСЕ ПОЛЯ ДЛЯ ДОСТУПА</p>
+            <input type="text" id="f-name" placeholder="Имя и Фамилия">
+            <input type="text" id="f-firm" placeholder="Юр. фирма">
+            <input type="text" id="f-addr" placeholder="Адрес">
+            <input type="text" id="f-email" placeholder="Email">
+            <button class="btn-reg" onclick="validateStep1()">ЭНТЕР (ДАЛЕЕ)</button>
+        </div>
+    </div>
+
+    <div id="pass-overlay" class="overlay">
+        <div class="modal">
+            <h3 id="p-header">ВЕРИФИКАЦИЯ</h3>
+            <input id="m-key" value="IS-777-GOLDEN-2026" readonly>
+            <input id="c-key" placeholder="Повторите пароль">
+            <button class="btn-reg" onclick="finalize()">ЭНТЕР (ВОЙТИ)</button>
+        </div>
+    </div>
+
+    <div id="office-page" style="display:none; padding:40px;">
+        <h2 id="office-title" style="color: var(--gold);"></h2>
+        <div id="money-flow" style="color:#0f0;">💰 [АДМИНИСТРАТОР] ПРИХОД ПОДТВЕРЖДЕН: €500.00</div>
+    </div>
+
+    <script>
+        // ВОССТАНОВЛЕННЫЙ ПОЛНЫЙ СПИСОК [cite: 2026-01-25]
+        const modules = ['ЕСПЧ', 'ИММИГРАЦИЯ', 'КОММЕРЦИЯ', 'ТРУДОУСТРОЙСТВО', 'НЕДВИЖИМОСТЬ', 'СЕМЕЙНОЕ ПРАВО', 'GDPR ЗАЩИТА'];
+        let activeId = '';
+
+        const lGrid = document.getElementById('landing-grid');
+        modules.forEach(m => {
+            lGrid.innerHTML += `
+                <div class="card">
+                    <h3>${m}</h3>
+                    <button class="btn-reg" onclick="activeId='${m}'; document.getElementById('reg-overlay').style.display='flex'">ЗАРЕГИСТРИРОВАТЬСЯ</button>
+                    <button class="btn-login" onclick="activeId='${m}'; showAuth('login')">ЗАРЕГИСТРИРОВАН</button>
+                </div>
+            `;
+        });
+
+        function validateStep1() {
+            const fields = ['f-name', 'f-firm', 'f-addr', 'f-email'];
+            let valid = true;
+            fields.forEach(id => {
+                if(document.getElementById(id).value.trim() === "") {
+                    valid = false; document.getElementById(id).style.borderColor = "red";
+                } else { document.getElementById(id).style.borderColor = "#444"; }
+            });
+            if(valid) { showAuth('reg'); } else { alert("Заполните анкету!"); }
+        }
+
+        function showAuth(mode) {
+            document.getElementById('reg-overlay').style.display = 'none';
+            document.getElementById('pass-overlay').style.display = 'flex';
+            const mk = document.getElementById('m-key');
+            const ck = document.getElementById('c-key');
+            if(mode === 'reg') {
+                mk.type = 'text'; ck.type = 'text';
+            } else {
+                mk.type = 'password'; ck.type = 'password';
+            }
+        }
+
+        function finalize() {
+            if(document.getElementById('c-key').value === "IS-777-GOLDEN-2026") {
+                document.getElementById('pass-overlay').style.display = 'none';
+                document.getElementById('landing-page').style.display = 'none';
+                document.getElementById('office-page').style.display = 'block';
+                document.getElementById('office-title').innerText = "ОФИС: " + activeId;
+                document.getElementById('money-flow').style.display = 'block';
+            } else { alert("АГЕНТ 4: Ошибка ключа!"); }
+        }
+    </script>
+</body>
+</html>

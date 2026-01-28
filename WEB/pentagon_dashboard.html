@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Irish Shepherd | Pentagon Control</title>
+    <style>
+        body { background-color: #000; color: #00ff00; font-family: 'Courier New', monospace; margin: 0; padding: 20px; overflow: hidden; }
+        .dashboard { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 20px; height: 95vh; }
+        .agent-box { border: 1px solid #00ff00; padding: 15px; background: rgba(0, 15, 0, 0.9); position: relative; transition: 0.3s; }
+        .agent-header { border-bottom: 1px solid #00ff00; padding-bottom: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; font-weight: bold; }
+        .central-core { border: 3px double #00ff00; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: radial-gradient(circle, #001a00 0%, #000 100%); transition: 0.5s; }
+        
+        /* Зона пульсации и приема файлов */
+        #drop-zone { border: 2px dashed #00ff00; padding: 60px; margin: 20px; cursor: pointer; transition: 0.3s; z-index: 10; width: 80%; }
+        .pulse-active { 
+            animation: pulse-border 1s infinite; 
+            box-shadow: 0 0 60px #00ff00 !important; 
+            background: rgba(0, 255, 0, 0.2) !important; 
+            border-style: solid !important;
+        }
+        @keyframes pulse-border { 0% { border-color: #00ff00; } 50% { border-color: #fff; } 100% { border-color: #00ff00; } }
+        
+        .log-stream { font-size: 0.75em; color: #00cc00; height: 120px; overflow-y: hidden; margin-top: 10px; line-height: 1.4; }
+        .download-btn { background: #00ff00; color: #000; border: none; padding: 15px 30px; cursor: pointer; font-weight: bold; display: none; margin-top: 20px; box-shadow: 0 0 20px #00ff00; }
+        .status { text-shadow: 0 0 5px #00ff00; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard" id="main-ui">
+    <div class="side-panel">
+        <div class="agent-box" id="box-a1">
+            <div class="agent-header"><span>A1: ANALYST</span><span class="status">ONLINE</span></div>
+            <div id="log-1" class="log-stream">> СЕЙФ ГОТОВ К ПРИЕМУ...</div>
+        </div>
+        <div style="height: 20px;"></div>
+        <div class="agent-box" id="box-a3" style="border-color: #0088ff;">
+            <div class="agent-header"><span>A3: JURIST</span><span class="status">SECURE</span></div>
+            <div id="log-3" class="log-stream">> ACT 1977: ПОДКЛЮЧЕН</div>
+        </div>
+    </div>
+
+    <div class="central-core" id="core">
+        <h1 style="letter-spacing: 7px; margin-bottom: 0;">PENTAGON CONTROL</h1>
+        <p style="font-size: 0.7em; color: #008800;">GLOBAL OPERATING SYSTEM | PHASE 1</p>
+        
+        <div id="drop-zone">
+            <h2 id="core-text" style="margin: 0;">DROP CASE PDF HERE</h2>
+            <p id="sub-text" style="margin: 10px 0 0 0; opacity: 0.7;">CEADAR VERIFICATION ZONE</p>
+        </div>
+
+        <a id="download-link" href="../DATA/ARCHIVE/verdict.pdf" download style="text-decoration: none;">
+            <button class="download-btn" id="btn-download">📥 СКАЧАТЬ ВЕРДИКТ ИЗ АРХИВА</button>
+        </a>
+    </div>
+
+    <div class="side-panel">
+        <div class="agent-box" id="box-a2" style="border-color: #ff3333;">
+            <div class="agent-header"><span>A2: BRUNO</span><span class="status">HUNTING</span></div>
+            <div id="log-2" class="log-stream">> КОНТРРАЗВЕДКА АКТИВНА...</div>
+        </div>
+        <div style="height: 20px;"></div>
+        <div class="agent-box" id="box-a4" style="border-color: #ffcc00;">
+            <div class="agent-header"><span>A4: CONTROLLER</span><span class="status">VALIDATING</span></div>
+            <div id="log-4" class="log-stream">> INTEGRITY: 100%</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const coreText = document.getElementById('core-text');
+    const subText = document.getElementById('sub-text');
+
+    // 1. ДАТЧИКИ ПОДНОСА (СЕНСОРЫ)
+    ['dragover', 'dragenter'].forEach(eventName => {
+        document.addEventListener(eventName, e => e.preventDefault()); // Блокируем открытие файла браузером
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.add('pulse-active');
+            coreText.innerText = "RELEASE TO ANALYZE";
+            subText.innerText = "READY FOR INGESTION";
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('pulse-active');
+        });
+    });
+
+    // 2. ПРИЕМ ФАЙЛА (INGESTION)
+    dropZone.addEventListener('drop', (e) => {
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            coreText.innerText = "INGESTING: " + file.name.toUpperCase();
+            subText.innerText = "SECURITY SCAN IN PROGRESS...";
+            startAnalysisSequence(file.name);
+        }
+    });
+
+    // 3. ЦИКЛ РАБОТЫ АГЕНТОВ (MAgic)
+    function startAnalysisSequence(fileName) {
+        const logs = [
+            {id: 'log-1', text: `> ФАЙЛ ${fileName} ПРИНЯТ.`, box: 'box-a1'},
+            {id: 'log-3', text: '> СВЕРКА С UNFAIR DISMISSALS ACT 1977...', box: 'box-a3'},
+            {id: 'log-2', text: '> ПРОВЕРКА IP НА ЛОГИЧЕСКИЕ ЛОВУШКИ...', box: 'box-a2'},
+            {id: 'log-4', text: '> СООТВЕТСТВИЕ CEADAR: ПОДТВЕРЖДЕНО.', box: 'box-a4'}
+        ];
+
+        logs.forEach((log, i) => {
+            setTimeout(() => {
+                const element = document.getElementById(log.id);
+                element.innerHTML += `<br><span style="color:#fff">${log.text}</span>`;
+                // Эффект активации бокса
+                document.getElementById(log.box).style.boxShadow = "0 0 25px #00ff00";
+                setTimeout(() => document.getElementById(log.box).style.boxShadow = "none", 600);
+            }, (i + 1) * 1200);
+        });
+
+        // ФИНАЛ: ВЫДАЧА АКТИВА
+        setTimeout(() => {
+            dropZone.style.display = 'none';
+            document.getElementById('btn-download').style.display = 'block';
+            coreText.innerText = "ANALYSIS COMPLETE";
+            coreText.style.color = "#fff";
+            subText.innerText = "ASSET GENERATED IN ARCHIVE";
+        }, 5500);
+    }
+</script>
+</body>
+</html>
