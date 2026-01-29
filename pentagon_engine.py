@@ -1,109 +1,135 @@
 import streamlit as st
-import streamlit.components.v1 as components
 import os
-from datetime import datetime
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib import colors
+from openai import OpenAI
+import fitz  # PyMuPDF
+from fpdf import FPDF
+import uuid
 
-# 1. ENSURE DIRECTORY STRUCTURE
-if not os.path.exists("DATA/ARCHIVE"):
-    os.makedirs("DATA/ARCHIVE", exist_ok=True)
+# --- CONFIGURATION (DeepSeek Engine) [cite: 2026-01-20, 2026-01-28] ---
+try:
+    api_key = st.secrets["OPENAI_API_KEY"]
+except:
+    api_key = "sk-ffce960a76d040d29031825ad4c4428c"
 
-# 2. AGENT-3: CORE AUDIT ENGINE
-def generate_supreme_audit(case_id, original_filename="LEGAL_CASE.pdf"):
-    report_path = "DATA/ARCHIVE/verdict.pdf"
-    c = canvas.Canvas(report_path, pagesize=letter)
-    
-    # Professional Header
-    c.setFont("Helvetica-Bold", 18)
-    c.setFillColor(colors.red)
-    c.drawCentredString(300, 750, "IRISH SHEPHERD: SUPREME AUDIT REPORT")
-    
-    # Audit Meta Information
-    c.setFont("Helvetica-Bold", 10)
-    c.setFillColor(colors.black)
-    c.drawString(70, 715, f"ANALYZED DOCUMENT: {original_filename}")
-    c.drawString(70, 700, "DOCUMENT VOLUME: 338 PAGES")
-    c.drawString(70, 685, f"CASE ID: {case_id}")
-    c.drawString(70, 670, f"TIMESTAMP: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    
-    c.setLineWidth(1)
-    c.line(70, 660, 530, 660)
+client = OpenAI(
+    api_key=api_key, 
+    base_url="https://api.deepseek.com/v1"
+)
 
-    # Agent-3 Logical Verdict (Your specific requirements)
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(70, 640, "STRATEGIC STRUCTURAL AUDIT RESULTS:")
-    
-    y = 620
-    audit_log = [
-        ("INFO", "> Initializing neural scanner... CONFIRMED"),
-        ("INFO", "> Integrity check (Pages 1-338)... COMPLETED"),
-        ("REJECT", "[!!!] PAGE 166: REJECTED. Reason: Legal context inconsistency detected."),
-        ("REJECT", "[!!!] PAGE 213: REJECTED. Reason: Missing digital signature verification."),
-        ("SUCCESS", "> Remaining 336 pages: VERIFIED SUCCESSFULLY"),
-        ("", ""),
-        ("INFO", "COMPLIANCE STATUS:"),
-        ("INFO", "Statutory Basis: Unfair Dismissals Act 1977.")
-    ]
-    
-    for status, text in audit_log:
-        if status == "REJECT":
-            c.setFillColor(colors.red)
-            c.setFont("Helvetica-Bold", 10)
-        elif status == "SUCCESS":
-            c.setFillColor(colors.green)
-            c.setFont("Helvetica-Bold", 10)
-        else:
-            c.setFillColor(colors.black)
-            c.setFont("Helvetica", 10)
-        
-        c.drawString(70, y, text)
-        y -= 18
+# --- PDF GENERATOR SETUP (fpdf2 standards 2.7.6) [cite: 2026-01-28, 2026-01-29] ---
+class LegalReport(FPDF):
+    def header(self):
+        self.set_font('Arial', 'B', 12)
+        self.cell(0, 10, 'IRISH SHEPHERD: OFFICIAL SUPREME VERDICT', align='C', new_x="LMARGIN", new_y="NEXT")
+        self.ln(5)
 
-    # Final Determination Box
-    c.setStrokeColor(colors.red)
-    c.rect(70, y-40, 460, 50, fill=0)
-    c.setFont("Helvetica-Bold", 14)
-    c.setFillColor(colors.darkgreen)
-    c.drawCentredString(300, y-25, "DETERMINATION: THE CLAIM IS FULLY SATISFIED.")
-    
-    # Official Footer
-    c.setFont("Helvetica-Oblique", 8)
-    c.setFillColor(colors.grey)
-    c.drawString(70, 50, "CONFIDENTIAL | IRISH SHEPHERD GLOBAL | CeADAR CERTIFIED SYSTEM")
-    
-    c.save()
-    return report_path
+def extract_text_from_pdf(uploaded_file):
+    try:
+        file_bytes = uploaded_file.read()
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        text = "".join([page.get_text() for page in doc])
+        return text
+    except Exception as e:
+        return f"Error reading PDF: {str(e)}"
 
-# 3. INTERFACE (PENTAGON CONTROL PANEL)
-st.set_page_config(page_title="Irish Shepherd | Pentagon", layout="wide")
+# --- 4-4-4 BURAN CHAIN (ANGLO-IRISH LOGIC) [cite: 2025-12-23, 2026-01-20] ---
+def run_legal_factory(user_task, full_context):
+    # Stage 1: Analyst [cite: 2026-01-05]
+    ana = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[{"role": "system", "content": "You are a Professional Legal Analyst in Ireland. Extract key facts. Respond strictly in English."},
+                  {"role": "user", "content": f"Task: {user_task}\n\nDocument Context: {full_context}"}]
+    ).choices[0].message.content
 
-# Connect the Visual Dashboard from WEB folder
-html_file_path = os.path.join("WEB", "pentagon_dashboard.html")
-if os.path.exists(html_file_path):
-    with open(html_file_path, "r", encoding="utf-8") as f:
-        components.html(f.read(), height=800)
+    # Stage 2: Bruno (Opponent) [cite: 2025-12-23]
+    bru = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[{"role": "system", "content": "You are Bruno, the Adversary. Find legal weaknesses. Respond strictly in English."},
+                  {"role": "user", "content": ana}]
+    ).choices[0].message.content
 
-# 4. SIDEBAR CONTROL CENTER
-st.sidebar.title("🔐 SECURITY CORE")
-uploaded_file = st.sidebar.file_uploader("UPLOAD LEGAL CASE (PDF):", type="pdf")
-case_id = st.sidebar.text_input("CASE ID:", "ADJ-00055820")
+    # Stage 3: Jurist (Irish Law Focus) [cite: 2026-01-20]
+    jur = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[{"role": "system", "content": "You are an Irish Solicitor. Apply the Unfair Dismissals Act 1977. Respond strictly in English."},
+                  {"role": "user", "content": f"Facts: {ana}\n\nCounter-arguments: {bru}"}]
+    ).choices[0].message.content
 
-if st.sidebar.button("⚡ RUN AGENT-3 AUDIT"):
-    name = uploaded_file.name if uploaded_file else "ADJ-00055820.pdf"
+    # Stage 4: Controller (CeADAR Ethics) [cite: 2026-01-07]
+    con = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[{"role": "system", "content": "You are the CeADAR Ethics Controller. Verify logic and AI transparency. Respond strictly in English."},
+                  {"role": "user", "content": f"Legal Position: {jur}"}]
+    ).choices[0].message.content
+
+    # Stage 5: Supreme Judge [cite: 2026-01-20]
+    judge = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[{"role": "system", "content": "You are the Supreme Judge. Issue a final unique determination. Respond strictly in English."},
+                  {"role": "user", "content": f"Analysis: {ana}\nRisks: {bru}\nLaw: {jur}\nAudit: {con}"}]
+    ).choices[0].message.content
     
-    # Execution
-    result_pdf = generate_supreme_audit(case_id, name)
-    
-    st.sidebar.success("AUDIT COMPLETED!")
-    
-    # Download Interface
-    with open(result_pdf, "rb") as f:
-        st.sidebar.download_button(
-            label="📥 DOWNLOAD AGENT-3 REPORT",
-            data=f,
-            file_name=f"AUDIT_REPORT_{case_id}.pdf",
-            mime="application/pdf",
-            use_container_width=True
-        )
+    return ana, bru, jur, con, judge
+
+# --- INTERFACE [cite: 2026-01-20] ---
+st.set_page_config(page_title="Irish Shepherd OS", layout="wide")
+st.title("🐺 Irish Shepherd OS: Global Legal Platform")
+
+st.sidebar.markdown("### 🌍 Expansion Goal")
+st.sidebar.info("Two Continents Platform. No human staff. CeADAR Certified [cite: 2026-01-07, 2026-01-20].")
+
+user_instruction = st.text_area("Legal Task/Instruction (In English):", value="Analyze unfair dismissal claim based on the provided document.", height=100)
+uploaded_files = st.file_uploader("Upload Legal Cases (PDF):", type=["pdf"], accept_multiple_files=True)
+
+if st.button("👑 SUPREME JUDGE VERDICT"):
+    if not user_instruction:
+        st.error("Please enter a task!")
+    elif not uploaded_files:
+        st.error("Please upload at least one PDF!")
+    else:
+        with st.spinner("Pentagon System is reaching a final verdict..."):
+            combined_text = "" # RESET CONTEXT [cite: 2026-01-06]
+            for f in uploaded_files:
+                combined_text += f"\n--- FILENAME: {f.name} ---\n" + extract_text_from_pdf(f)
+            
+            ana, bru, jur, con, judge = run_legal_factory(user_instruction, combined_text)
+            
+            st.markdown("### 🧬 Digital Intelligence Flow")
+            c1, c2 = st.columns(2)
+            with c1:
+                st.error(f"**Agent 2 (Bruno - Opponent):**\n\n{bru}")
+            with c2:
+                st.warning(f"**Agent 4 (CeADAR Controller):**\n\n{con}")
+
+            st.markdown("---")
+            st.header("⚖️ SUPREME JUDGE FINAL DETERMINATION")
+            st.success(judge)
+
+            # PDF GENERATION (Modern fpdf2 syntax) [cite: 2026-01-29]
+            try:
+                pdf = LegalReport()
+                pdf.add_page()
+                pdf.set_font('Arial', size=11)
+                
+                case_id = str(uuid.uuid4())[:8].upper()
+                pdf.cell(0, 10, f"Case ID: {case_id}", new_x="LMARGIN", new_y="NEXT")
+                pdf.cell(0, 10, f"Timestamp: 2026-01-29", new_x="LMARGIN", new_y="NEXT")
+                pdf.ln(5)
+                
+                # ASCII encoding to avoid encoding errors with standard fonts
+                clean_text = judge.encode('ascii', 'ignore').decode('ascii')
+                pdf.multi_cell(0, 10, text=clean_text)
+                
+                # FINAL FIX: Convert result to bytes for st.download_button [cite: 2026-01-29]
+                pdf_output = bytes(pdf.output())
+                
+                st.download_button(
+                    label="📥 DOWNLOAD OFFICIAL VERDICT (PDF)",
+                    data=pdf_output,
+                    file_name=f"Verdict_{case_id}.pdf",
+                    mime="application/pdf"
+                )
+            except Exception as e:
+                st.error(f"PDF Generation Error: {e}")
+                
+   
