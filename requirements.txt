@@ -1,4 +1,5 @@
 streamlit
 openai
 pymupdf
-fpdf2
+fpdf
+requests
