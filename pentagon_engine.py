@@ -5,7 +5,7 @@ import fitz  # PyMuPDF
 from fpdf import FPDF
 import uuid
 
-# --- КОНФИГУРАЦИЯ [cite: 2026-01-28] ---
+# --- КОНФИГУРАЦИЯ СИСТЕМЫ [cite: 2026-01-28] ---
 try:
     api_key = st.secrets["OPENAI_API_KEY"]
 except:
@@ -16,12 +16,14 @@ client = OpenAI(
     base_url="https://api.deepseek.com/v1"
 )
 
-# --- ГЕНЕРАТОР PDF [cite: 2026-01-29] ---
+# --- ГЕНЕРАТОР PDF ВЫСШЕГО КЛАССА [cite: 2026-01-29] ---
 class LegalReport(FPDF):
     def header(self):
-        self.set_font('Arial', 'B', 12)
-        self.cell(0, 10, 'IRISH SHEPHERD: OFFICIAL SUPREME VERDICT', align='C', new_x="LMARGIN", new_y="NEXT")
-        self.ln(5)
+        self.set_font('Arial', 'B', 14)
+        self.cell(0, 10, 'IRISH SHEPHERD: SUPREME JUDICIAL DETERMINATION', align='C', new_x="LMARGIN", new_y="NEXT")
+        self.set_font('Arial', 'I', 10)
+        self.cell(0, 10, 'Issued under the 4-4-4 Buran Digital Intelligence Protocol', align='C', new_x="LMARGIN", new_y="NEXT")
+        self.ln(10)
 
 def extract_text_from_pdf(uploaded_file):
     try:
@@ -32,16 +34,16 @@ def extract_text_from_pdf(uploaded_file):
     except Exception as e:
         return f"Error reading PDF: {str(e)}"
 
-# --- ЦЕПОЧКА 5 АГЕНТОВ С ВАШИМИ ПРОМПТАМИ [cite: 2025-12-23, 2026-01-20, 2026-01-29] ---
+# --- ЦЕПОЧКА 5 АГЕНТОВ (ПОЛНОЕ ВНЕДРЕНИЕ) [cite: 2025-12-23, 2026-01-20, 2026-01-29] ---
 def run_legal_factory(user_task, full_context):
-    # Агент 1: Аналитик [cite: 2026-01-05]
+    # Агент 1: Аналитик фактов
     ana = client.chat.completions.create(
         model="deepseek-chat",
         messages=[{"role": "system", "content": "You are AGENT-1: PROFESSIONAL LEGAL ANALYST. Mission: Extract every single relevant fact. Focus on: Dates, names, specific actions, warnings, and evidence integrity. Respond strictly in English."},
                   {"role": "user", "content": f"Task: {user_task}\n\nContext: {full_context}"}]
     ).choices[0].message.content
 
-    # Агент 2: Бруно (ВАШ ПОЛНЫЙ ПРОМПТ) [cite: 2025-12-23, 2026-01-29]
+    # Агент 2: Бруно (Ваш расширенный промпт) [cite: 2025-12-23]
     bru_prompt = """You are AGENT-2: ADVERSARIAL OPPONENT. 
     Mission: Find every possible weakness, procedural violation, legal risk, and argument to defeat the case.
     Assume: Opposing counsel is competent, judges are hostile, burden of proof is maximal.
@@ -54,7 +56,7 @@ def run_legal_factory(user_task, full_context):
                   {"role": "user", "content": ana}]
     ).choices[0].message.content
 
-    # Агент 3: Ирландский юрист [cite: 2026-01-20]
+    # Агент 3: Ирландский юрист
     jur_prompt = """You are AGENT-3: EXPERT IRISH SOLICITOR. 
     Mission: Build an unshakeable defense based on Unfair Dismissals Act 1977-2015. 
     Take the 'poisoned' report from AGENT-2 and neutralize every weakness using statutory interpretations and precedents. Win at the WRC."""
@@ -64,7 +66,7 @@ def run_legal_factory(user_task, full_context):
                   {"role": "user", "content": f"Facts: {ana}\n\nRisks: {bru}"}]
     ).choices[0].message.content
 
-    # Агент 4: Контроллер CeADAR (ВАШ ИСПРАВЛЕННЫЙ JSON) [cite: 2026-01-07, 2026-01-29]
+    # Агент 4: Контроллер CeADAR [cite: 2026-01-07]
     con_prompt = """{
       "agent": "Agent-4-CONTROLLER",
       "role": "CeADAR Ethics & Logic Auditor",
@@ -80,16 +82,26 @@ def run_legal_factory(user_task, full_context):
                   {"role": "user", "content": f"Chain: {ana} -> {bru} -> {jur}"}]
     ).choices[0].message.content
 
-    # Агент 5: Верховный судья [cite: 2026-01-20]
+    # Агент 5: ВЕРХОВНЫЙ СУДЬЯ (УСИЛЕННЫЙ ПРОМПТ) [cite: 2026-01-20]
+    judge_prompt = """You are AGENT-5: SUPREME JUDGE OF IRELAND.
+    Your Mission: Issue a final, authoritative Determination on the dismissal claim.
+    You must follow this Judicial Protocol:
+    1. Jurisdictional Finding: Reference the Unfair Dismissals Act 1977-2015.
+    2. Analysis of Conflict: Explicitly weigh the procedural violations found by AGENT-2 against the legal justifications provided by AGENT-3.
+    3. The 'Natural Justice' Test: Evaluate if the employer's actions meet the standard of a 'reasonable employer'.
+    4. Final Ruling: State clearly if the dismissal is Fair or Unfair.
+    5. Award/Remedy: If unfair, specify compensation based on financial loss.
+    Style: Use cold, objective, and superior legal language. No conversational fillers. Your word is final."""
+    
     judge = client.chat.completions.create(
         model="deepseek-chat",
-        messages=[{"role": "system", "content": "You are AGENT-5: SUPREME JUDGE. Issue a Final unique Determination. Synthesize the analysis, brutal opposition, and defense into an authoritative legal verdict in professional English."},
+        messages=[{"role": "system", "content": judge_prompt},
                   {"role": "user", "content": f"Analysis: {ana}\nRisks: {bru}\nDefense: {jur}\nAudit: {con}"}]
     ).choices[0].message.content
     
     return ana, bru, jur, con, judge
 
-# --- ИНТЕРФЕЙС [cite: 2026-01-20, 2026-01-29] ---
+# --- ИНТЕРФЕЙС ПЛАТФОРМЫ [cite: 2026-01-20, 2026-01-29] ---
 st.set_page_config(page_title="Irish Shepherd OS", layout="wide")
 st.title("🐺 Irish Shepherd OS: Global Legal Platform")
 
@@ -108,21 +120,38 @@ if st.button("👑 SUPREME JUDGE VERDICT"):
             st.markdown("### 🧬 Digital Intelligence Flow (Audit Trace)")
             c1, c2 = st.columns(2)
             with c1:
-                st.info(f"**Agent 1: Analyst**\n\n{ana}")
-                st.error(f"**Agent 2: Bruno**\n\n{bru}")
+                with st.expander("👁️ Agent 1: Facts Analyst", expanded=True):
+                    st.write(ana)
+                with st.expander("🔥 Agent 2: Bruno (Opponent)", expanded=True):
+                    st.error(bru)
             with c2:
-                st.warning(f"**Agent 3: Solicitor**\n\n{jur}")
-                st.success(f"**Agent 4: Ethics Controller**\n\n{con}")
+                with st.expander("⚖️ Agent 3: Irish Solicitor", expanded=True):
+                    st.warning(jur)
+                with st.expander("🛡️ Agent 4: Ethics Controller (CeADAR)", expanded=True):
+                    st.info(con)
 
             st.markdown("---")
             st.header("⚖️ Agent 5: SUPREME JUDGE FINAL DETERMINATION")
-            st.write(judge)
+            st.success(judge)
 
-            # PDF GENERATION
+            # PDF GENERATION С НОМЕРОМ ДЕЛА
             pdf = LegalReport()
             pdf.add_page()
             pdf.set_font('Arial', size=11)
-            case_id = str(uuid.uuid4())[:8].upper()
-            pdf.multi_cell(0, 10, txt=f"Case ID: {case_id}\n\n{judge.encode('ascii', 'ignore').decode('ascii')}")
+            case_id = f"IS-DUBLIN-{str(uuid.uuid4())[:6].upper()}"
             
-            st.download_button("📥 DOWNLOAD PDF VERDICT", data=bytes(pdf.output()), file_name=f"Verdict_{case_id}.pdf")
+            pdf.set_font('Arial', 'B', 11)
+            pdf.cell(0, 10, f"Case Reference: {case_id}", new_x="LMARGIN", new_y="NEXT")
+            pdf.cell(0, 10, f"Date: 2026-01-29", new_x="LMARGIN", new_y="NEXT")
+            pdf.ln(5)
+            
+            pdf.set_font('Arial', size=11)
+            clean_text = judge.encode('ascii', 'ignore').decode('ascii')
+            pdf.multi_cell(0, 10, txt=clean_text)
+            
+            st.download_button(
+                label="📥 DOWNLOAD OFFICIAL PDF VERDICT",
+                data=bytes(pdf.output()),
+                file_name=f"Verdict_{case_id}.pdf",
+                mime="application/pdf"
+            )
