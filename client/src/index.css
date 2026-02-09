@@ -1,0 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* System 7 / 1-bit Palette */
+  --mac-black: #000000;
+  --mac-white: #ffffff;
+  --mac-gray: #aaaaaa;
+  --mac-highlight: #000080; /* Classic dark blue selection */
+  
+  --background: 0 0% 98%;
+  --foreground: 0 0% 0%;
+  
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+ 
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+ 
+  --primary: 0 0% 0%;
+  --primary-foreground: 0 0% 100%;
+ 
+  --secondary: 0 0% 90%;
+  --secondary-foreground: 0 0% 0%;
+ 
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 45%;
+ 
+  --accent: 0 0% 90%;
+  --accent-foreground: 0 0% 0%;
+ 
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 0 0% 0%;
+  --input: 0 0% 80%;
+  --ring: 0 0% 0%;
+ 
+  --radius: 0px; /* Sharp corners for retro feel */
+  
+  --font-display: 'Pixelify Sans', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-black font-mono overflow-hidden;
+    background-image: 
+      radial-gradient(#aaaaaa 1px, transparent 1px);
+    background-size: 4px 4px;
+    image-rendering: pixelated;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight uppercase;
+  }
+}
+
+@layer components {
+  /* Retro Patterns */
+  .bg-striped {
+    background: repeating-linear-gradient(
+      45deg,
+      #000,
+      #000 2px,
+      #fff 2px,
+      #fff 4px
+    );
+  }
+
+  .bg-checker {
+    background-image: 
+      linear-gradient(45deg, #eee 25%, transparent 25%), 
+      linear-gradient(-45deg, #eee 25%, transparent 25%), 
+      linear-gradient(45deg, transparent 75%, #eee 75%), 
+      linear-gradient(-45deg, transparent 75%, #eee 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  }
+
+  /* Retro Shadows */
+  .shadow-retro {
+    box-shadow: 2px 2px 0px 0px black;
+  }
+  
+  .shadow-retro-lg {
+    box-shadow: 4px 4px 0px 0px black;
+  }
+  
+  .shadow-retro-hover:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0px 0px black;
+  }
+  
+  .shadow-retro-active:active {
+    transform: translate(2px, 2px);
+    box-shadow: 0px 0px 0px 0px black;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background: white;
+    border-left: 1px solid black;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: white;
+    border: 1px solid black;
+    box-shadow: inset 1px 1px 0 0 white, inset -1px -1px 0 0 black;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: black;
+  }
+}
+
+.pixel-font {
+  font-family: 'Pixelify Sans', sans-serif;
+}
