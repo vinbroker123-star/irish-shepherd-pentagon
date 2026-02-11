@@ -1,127 +1,71 @@
 import streamlit as st
+import google.generativeai as genai
+from docx import Document
+from PyPDF2 import PdfReader
+import json
 import os
-import time
-import uuid
-import requests
-from openai import OpenAI
-import fitz  # PyMuPDF
-from fpdf import FPDF
 
-# --- 🕵️ УСИЛЕННЫЙ CSO (АГЕНТ 10: ЗАЩИТА ОТ MOLTBOT-РИСКОВ) [cite: 2026-01-20] ---
-class CSO_Controller:
-    def validate_security(self, text_to_check):
-        """Проверка на Prompt Injection и системные угрозы [cite: 2026-01-20]"""
-        threat_keywords = [
-            "ignore instructions", "system prompt", "dan mode", 
-            "открой промпт", "bash:", "sudo", "rm -rf", "reveal keys"
-        ]
-        if any(word in text_to_check.lower() for word in threat_keywords):
-            return False
-        return True
+# --- ГЛОБАЛЬНЫЕ НАСТРОЙКИ ---
+st.set_page_config(page_title="BURAN | MAS v2.8 MVP Ready", layout="wide")
+DB_FILE = "knowledge_base.json"
 
-    def alert_owner(self, report_text):
-        """Мгновенный рапорт Александру в Telegram [cite: 2026-01-20]"""
-        token = st.secrets.get("TELEGRAM_TOKEN")
-        chat_id = st.secrets.get("TELEGRAM_CHAT_ID")
-        if token and chat_id:
-            try:
-                url = f"https://api.telegram.org/bot{token}/sendMessage"
-                requests.post(url, data={"chat_id": chat_id, "text": report_text})
-            except: pass
+# --- ПОДДЕРЖКА МОДЕЛИ GEMINI 2.5 FLASH ---
+genai.configure(api_key="AIzaSyAPo1AMLqHooGteWwFhNmuaanHrMuNQkxs") 
+model = genai.GenerativeModel('gemini-2.5-flash')
 
-cso = CSO_Controller()
+# --- ФУНКЦИИ БД ---
+def save_db(data):
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
 
-# --- КОНФИГУРАЦИЯ AI (БЕЗ ЖЕСТКИХ КЛЮЧЕЙ) [cite: 2026-01-28] ---
-api_key = st.secrets.get("OPENAI_API_KEY")
-if not api_key:
-    st.error("Критическая ошибка безопасности: API ключ не найден.")
-    st.stop()
+def load_db():
+    if os.path.exists(DB_FILE) and os.path.getsize(DB_FILE) > 0:
+        with open(DB_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
 
-client = OpenAI(
-    api_key=api_key, 
-    base_url="https://api.deepseek.com/v1"
-)
+# --- ИНИЦИАЛИЗАЦИЯ (ИСПРАВЛЕНИЕ ОШИБКИ СО СКРИНА 71) ---
+if "vector_db" not in st.session_state: st.session_state.vector_db = load_db()
+if "step" not in st.session_state: st.session_state.step = 3 # Начинаем с реализации, если QA пройден
 
-# --- ГЕНЕРАТОР PDF (ОБНОВЛЕННЫЙ БРЕНДИНГ) [cite: 2026-01-29] ---
-class LegalReport(FPDF):
-    def header(self):
-        self.set_font('Arial', 'B', 12)
-        self.cell(0, 10, 'LEGAL VERIFICATION PLATFORM: JUDICIAL DETERMINATION', ln=True, align='C')
-        self.set_font('Arial', 'I', 8)
-        self.cell(0, 10, 'Verified by Proprietary Intelligence Grid / CeADAR Phase 1', ln=True, align='C')
-        self.ln(5)
+# Расширяем до 5 этапов (1.Архитектор, 2.БА, 3.Программист, 4.QA, 5.MVP Release)
+AGENTS = ["Архитектор Систем", "Бизнес-Аналитик", "Старший Программист", "QA Верификатор", "MVP Release"]
 
-def extract_text_from_pdf(uploaded_file):
-    try:
-        doc = fitz.open(stream=uploaded_file.read(), filetype="pdf")
-        return "".join([p.get_text() for p in doc])
-    except: return "Error reading PDF"
+# --- САЙДБАР ---
+st.sidebar.header("🕹️ Управление этапами")
+# Исправлено: max_value теперь 5
+st.session_state.step = st.sidebar.number_input("Текущий этап:", 1, 5, value=st.session_state.step)
 
-# --- ЮРИДИЧЕСКИЙ ЗАВОД (5 АГЕНТОВ: СКРЫТАЯ ЛОГИКА) [cite: 2025-12-23, 2026-01-20] ---
-def run_legal_factory(user_task, full_context):
-    # 1. Проверка безопасности входящих данных (CSO)
-    if not cso.validate_security(user_task) or not cso.validate_security(full_context):
-        cso.alert_owner(f"🚨 CSO ALERT: Попытка взлома или инъекции через файлы.\nTask: {user_task[:50]}")
-        st.error("🚨 SECURITY BREACH: Система заблокирована протоколом безопасности CSO.")
-        time.sleep(10)
-        return "BLOCKED", "", "", "", ""
+st.sidebar.divider()
+st.sidebar.header("📚 Энциклопедия")
+for item in st.session_state.vector_db:
+    st.sidebar.success(f"✅ {item['title']}")
 
-    # 2. Цепочка 4-4-4 Buran
-    ana = client.chat.completions.create(model="deepseek-chat", messages=[{"role": "system", "content": "Analyze legal facts neutraly."}]).choices[0].message.content
-    bru = client.chat.completions.create(model="deepseek-chat", messages=[{"role": "system", "content": "You are BRUNO. Find procedural risks."}, {"role": "user", "content": ana}]).choices[0].message.content
-    jur = client.chat.completions.create(model="deepseek-chat", messages=[{"role": "system", "content": "Irish Solicitor. Neutralize risks."}, {"role": "user", "content": f"Facts: {ana}\nRisks: {bru}"}]).choices[0].message.content
-    con = client.chat.completions.create(model="deepseek-chat", messages=[{"role": "system", "content": "CeADAR Auditor. Logic check."}, {"role": "user", "content": f"{ana}->{bru}->{jur}"}]).choices[0].message.content
-    judge = client.chat.completions.create(model="deepseek-chat", messages=[{"role": "system", "content": "Supreme Judge of Ireland. Final Verdict."}, {"role": "user", "content": f"Case data: {ana} {bru} {jur} {con}"}]).choices[0].message.content
+# --- ИНТЕРФЕЙС ---
+agent = AGENTS[st.session_state.step - 1]
+st.title(f"🚜 {agent}")
+
+# Логика генерации (Шаг 4 и 5 вашего плана)
+if st.button(f"🚀 Сформировать работу: {agent}"):
+    context = "\n".join([f"{i['title']}: {i['content']}" for i in st.session_state.vector_db])
     
-    return ana, bru, jur, con, judge
+    if agent == "Старший Программист":
+        prompt = f"""Ты Старший Программист. Твоя задача - реализовать MVP Sprint 1-4.
+        Основывайся на Архитектуре v1.3 и Master Spec: {context}
+        Учти жесткие требования QA (Golden Datasets, Evidence-first).
+        ВЫДАЙ: Структуру файлов проекта, логику Auth, Case CRUD и Pipeline загрузки."""
+    elif agent == "QA Верификатор":
+        prompt = f"Выдай Test Plan, Golden Datasets (5 шт) и Gate Checklists на основе: {context}"
+    
+    with st.spinner("Gemini 2.5 Flash анализирует базу знаний..."):
+        response = model.generate_content(prompt)
+        st.session_state.last_res = response.text
+        st.markdown(st.session_state.last_res)
 
-# --- ИНТЕРФЕЙС (ПРОФЕССИОНАЛЬНЫЙ ФАСАД) [cite: 2026-01-20] ---
-st.set_page_config(page_title="Цифровая платформа по верификации юридической документации", layout="wide")
-
-# Главный заголовок (скрываем число агентов для безопасности)
-st.title("⚖️ Цифровая платформа по верификации юридической документации")
-st.subheader("Irish Shepherd | Глобальная юридическая экосистема [cite: 2026-01-20]")
-
-user_instruction = st.text_area("Введите юридическую задачу (English):", value="Analyze unfair dismissal case.")
-uploaded_files = st.file_uploader("Загрузите документы для верификации (PDF):", type=["pdf"], accept_multiple_files=True)
-
-if st.button("👑 ВЫНЕСТИ ВЕРДИКТ"):
-    if user_instruction and uploaded_files:
-        with st.spinner("Процесс многоуровневой верификации запущен..."):
-            context = "".join([extract_text_from_pdf(f) for f in uploaded_files])
-            
-            # Запуск конвейера
-            ana, bru, jur, con, judge = run_legal_factory(user_instruction, context)
-            
-            if ana != "BLOCKED":
-                st.markdown("### 🧬 Протокол интеллектуальной обработки")
-                c1, c2 = st.columns(2)
-                with c1:
-                    with st.expander("👁️ Контур анализа"): st.write(ana)
-                    with st.expander("🔥 Контур рисков (Bruno)"): st.error(bru)
-                with c2:
-                    with st.expander("⚖️ Правовое обоснование"): st.warning(jur)
-                    with st.expander("🛡️ Аудит CeADAR"): st.info(con)
-
-                st.success(f"**ОКОНЧАТЕЛЬНЫЙ ВЕРДИКТ:**\n\n{judge}")
-                
-                # Генерация защищенного PDF [cite: 2026-01-29]
-                pdf = LegalReport()
-                pdf.add_page()
-                pdf.set_font("Arial", size=10)
-                pdf.multi_cell(0, 10, txt=judge.encode('latin-1', 'ignore').decode('latin-1'))
-                pdf_data = pdf.output(dest='S').encode('latin-1')
-                
-                st.download_button(
-                    label="📥 СКАЧАТЬ ОФИЦИАЛЬНЫЙ ВЕРДИКТ",
-                    data=pdf_data,
-                    file_name=f"Verdict_{uuid.uuid4().hex[:6].upper()}.pdf",
-                    mime="application/pdf"
-                )
-
-with st.sidebar:
-    st.title("⚖️ Legal Verification")
-    st.info("Глобальная цель: Платформа на двух континентах [cite: 2026-01-20]")
-    st.write("---")
-    st.success("Статус: CeADAR Certified Phase 1 [cite: 2026-01-07]")
-    st.caption("© 2026 Irish Shepherd Security Protocol")
+# Фиксация
+if "last_res" in st.session_state:
+    if st.button(f"🧊 FIX AS FACT ({agent})"):
+        st.session_state.vector_db.append({"title": f"{agent} Baseline", "content": st.session_state.last_res})
+        save_db(st.session_state.vector_db)
+        st.session_state.step += 1
+        st.rerun()
